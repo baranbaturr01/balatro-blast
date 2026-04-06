@@ -19,36 +19,92 @@ class JokerSlotComponent extends PositionComponent {
   @override
   void render(Canvas canvas) {
     final jokers = gameManager.state.jokers;
-    const slotW = kJokerWidth + 4.0;
-    const startX = 4.0;
 
-    // Draw empty slots.
+    // "JOKERS" label
+    final labelPainter = TextPainter(
+      text: const TextSpan(
+        text: 'JOKERS',
+        style: TextStyle(
+          color: AppColors.mutedPurple,
+          fontSize: 8,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 2,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    labelPainter.paint(canvas, const Offset(4, 2));
+
+    const slotTop = 14.0;
+    final slotW = kJokerWidth + 6.0;
+
+    // Draw slots
     for (int i = 0; i < kMaxJokers; i++) {
+      final slotX = i * slotW;
       final slotRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(startX + i * slotW, 4, kJokerWidth, kJokerHeight),
+        Rect.fromLTWH(slotX, slotTop, kJokerWidth, size.y - slotTop - 4),
         const Radius.circular(kCardRadius),
       );
-      final slotPaint = Paint()
-        ..color = AppColors.surface
-        ..style = PaintingStyle.fill;
-      canvas.drawRRect(slotRect, slotPaint);
 
-      final slotBorder = Paint()
-        ..color = AppColors.mutedPurple.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1;
-      canvas.drawRRect(slotRect, slotBorder);
-    }
+      if (i < jokers.length) {
+        // Filled joker slot – paint joker card
+        canvas.save();
+        canvas.translate(slotX, slotTop);
+        final painter = JokerPainter(joker: jokers[i]);
+        painter.paint(canvas, Size(kJokerWidth, size.y - slotTop - 4));
+        canvas.restore();
+      } else {
+        // Empty slot – draw dashed border
+        final bgPaint = Paint()
+          ..color = AppColors.surface.withValues(alpha: 0.5);
+        canvas.drawRRect(slotRect, bgPaint);
+        _drawDashedBorder(canvas, slotRect);
 
-    // Draw filled joker cards.
-    for (int i = 0; i < jokers.length; i++) {
-      final joker = jokers[i];
-      canvas.save();
-      canvas.translate(startX + i * slotW, 4);
-      final painter = JokerPainter(joker: joker);
-      painter.paint(canvas, const Size(kJokerWidth, kJokerHeight));
-      canvas.restore();
+        // Ghost icon
+        final ghostPainter = TextPainter(
+          text: const TextSpan(
+            text: '?',
+            style: TextStyle(
+              color: AppColors.mutedPurple,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        ghostPainter.paint(
+          canvas,
+          Offset(
+            slotX + (kJokerWidth - ghostPainter.width) / 2,
+            slotTop + (size.y - slotTop - 4 - ghostPainter.height) / 2,
+          ),
+        );
+      }
     }
+  }
+
+  void _drawDashedBorder(Canvas canvas, RRect rect) {
+    final paint = Paint()
+      ..color = AppColors.mutedPurple.withValues(alpha: 0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    const dashLen = 4.0;
+    const gapLen = 3.0;
+    final path = Path()..addRRect(rect);
+    final metrics = path.computeMetrics().first;
+    final totalLen = metrics.length;
+    double pos = 0;
+    final dashedPath = Path();
+    while (pos < totalLen) {
+      final end = (pos + dashLen).clamp(0.0, totalLen);
+      dashedPath.addPath(
+        metrics.extractPath(pos, end),
+        Offset.zero,
+      );
+      pos += dashLen + gapLen;
+    }
+    canvas.drawPath(dashedPath, paint);
   }
 
   void refresh() {

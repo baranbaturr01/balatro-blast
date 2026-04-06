@@ -1,6 +1,7 @@
 import 'package:balatro_blast/models/playing_card.dart';
 import 'package:balatro_blast/models/joker_card.dart';
 import 'package:balatro_blast/models/blind.dart';
+import 'package:balatro_blast/models/hand_type.dart';
 import 'package:balatro_blast/utils/constants.dart';
 
 enum GamePhase { mainMenu, blindSelect, playing, shop, gameOver, victory }
@@ -43,6 +44,9 @@ class GameState {
 
   /// Upgrade level per hand type (for planet cards). Key = HandType.name.
   Map<String, int> handLevels;
+
+  /// The hand type currently previewed from selected cards (null if none).
+  HandType? previewHandType;
 
   int get currentBlindTarget => currentBlind.targetScore;
 

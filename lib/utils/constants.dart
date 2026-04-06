@@ -9,15 +9,25 @@ const int kStartingMoney = 4;
 const int kTotalAntes = 8;
 const int kBlindsPerAnte = 3;
 
+// Landscape viewport dimensions.
+const double kViewportWidth = 800.0;
+const double kViewportHeight = 480.0;
+
+// Layout section heights.
+const double kHudHeight = 70.0;
+const double kJokerAreaHeight = 112.0;
+const double kScoreFormulaHeight = 50.0;
+const double kDeckAreaWidth = 90.0;
+
 // Card dimensions on the game canvas (logical pixels).
-const double kCardWidth = 60.0;
-const double kCardHeight = 90.0;
-const double kCardRadius = 6.0;
-const double kCardSelectedOffset = 16.0;
+const double kCardWidth = 72.0;
+const double kCardHeight = 108.0;
+const double kCardRadius = 8.0;
+const double kCardSelectedOffset = 20.0;
 
 // Joker slot dimensions.
-const double kJokerWidth = 60.0;
-const double kJokerHeight = 90.0;
+const double kJokerWidth = 72.0;
+const double kJokerHeight = 108.0;
 
 // Shop item costs.
 const int kJokerBaseCost = 6;
