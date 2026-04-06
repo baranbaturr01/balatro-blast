@@ -203,7 +203,7 @@ class CardFacePainter extends CustomPainter {
   }
 
   bool _isFaceOrAce(int rankValue) =>
-      rankValue == 1 || rankValue >= 11 || rankValue == 14;
+      rankValue >= 11; // J=11, Q=12, K=13, A=14
 
   void _drawCenterSymbol(Canvas canvas, Size size, String suitStr,
       Color suitColor, String rankStr) {

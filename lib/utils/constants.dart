@@ -54,6 +54,9 @@ const List<List<int>> kBlindTargets = [
   [50000, 75000, 100000],
 ];
 
+// Max spacing between card edges in hand layout.
+const double kMaxCardSpacing = 12.0;
+
 // Overlay keys used with Flame game.overlays.
 const String kOverlayMainMenu = 'mainMenu';
 const String kOverlayShop = 'shop';

@@ -95,7 +95,8 @@ class GameManager extends ChangeNotifier {
       try {
         final result = _evaluator.evaluate(List.from(_state.selectedCards));
         _state.previewHandType = result.handType;
-      } catch (_) {
+      } catch (e) {
+        // Evaluation can fail with unusual card counts; silently reset preview.
         _state.previewHandType = null;
       }
     }

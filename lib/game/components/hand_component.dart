@@ -40,7 +40,7 @@ class HandComponent extends PositionComponent {
     final spacing = hand.length <= 1
         ? 0.0
         : (available - kCardWidth) / (hand.length - 1);
-    final clampedSpacing = spacing.clamp(0.0, kCardWidth + 12.0);
+    final clampedSpacing = spacing.clamp(0.0, kCardWidth + kMaxCardSpacing);
     final totalCardWidth = kCardWidth + clampedSpacing * (hand.length - 1);
     final startX = (totalWidth - totalCardWidth) / 2;
 
