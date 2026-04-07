@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balatro_blast/game/balatro_blast_game.dart';
 import 'package:balatro_blast/models/game_state.dart';
+import 'package:balatro_blast/models/hand_type.dart';
 import 'package:balatro_blast/providers/game_provider.dart';
 import 'package:balatro_blast/screens/main_menu_screen.dart';
 import 'package:balatro_blast/screens/shop_screen.dart';
@@ -69,6 +70,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Action button row overlay
+// ---------------------------------------------------------------------------
+
 class _ActionButtonRow extends ConsumerWidget {
   const _ActionButtonRow({required this.game});
 
@@ -82,6 +87,8 @@ class _ActionButtonRow extends ConsumerWidget {
     // Only show action buttons during active gameplay.
     if (state.phase != GamePhase.playing) return const SizedBox.shrink();
 
+    final selectedCount = state.selectedCards.length;
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -89,31 +96,54 @@ class _ActionButtonRow extends ConsumerWidget {
           end: Alignment.bottomCenter,
           colors: [
             AppColors.background.withValues(alpha: 0.0),
-            AppColors.background.withValues(alpha: 0.92),
-            AppColors.background,
+            AppColors.background.withValues(alpha: 0.85),
+            AppColors.background.withValues(alpha: 0.97),
           ],
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Play Hand button
-          _NeonButton(
-            label: '▶  Play Hand',
-            sublabel: '${state.handsLeft} left',
-            enabled: state.canPlay,
-            primaryColor: const Color(0xFF39FF14),
-            onPressed: () => game.playHand(),
+          // Hand info bar: selected count + hand type preview.
+          _HandInfoBar(
+            selectedCount: selectedCount,
+            previewHandType: state.previewHandType,
           ),
-          const SizedBox(width: 32),
-          // Discard button
-          _NeonButton(
-            label: '✕  Discard',
-            sublabel: '${state.discardsLeft} left',
-            enabled: state.canDiscard,
-            primaryColor: const Color(0xFFFF4444),
-            onPressed: () => game.discardCards(),
+          const SizedBox(height: 10),
+          // Main action buttons row.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Play Hand – primary action, larger.
+              _NeonButton(
+                label: '▶  Play Hand',
+                countLabel: '${state.handsLeft}',
+                countSuffix: state.handsLeft == 1 ? 'hand' : 'hands',
+                enabled: state.canPlay,
+                width: 192,
+                height: 62,
+                gradientColors: const [Color(0xFF1a6b00), Color(0xFF39FF14)],
+                glowColor: const Color(0xFF39FF14),
+                borderColor: const Color(0xFF39FF14),
+                onPressed: () => game.playHand(),
+              ),
+              const SizedBox(width: 20),
+              // Discard – secondary action, slightly smaller.
+              _NeonButton(
+                label: '✕  Discard',
+                countLabel: '${state.discardsLeft}',
+                countSuffix: state.discardsLeft == 1 ? 'discard' : 'discards',
+                enabled: state.canDiscard,
+                width: 168,
+                height: 58,
+                gradientColors: const [Color(0xFF6b1a00), Color(0xFFFF6B35)],
+                glowColor: const Color(0xFFFF4444),
+                borderColor: const Color(0xFFFF5500),
+                onPressed: () => game.discardCards(),
+              ),
+            ],
           ),
         ],
       ),
@@ -121,70 +151,282 @@ class _ActionButtonRow extends ConsumerWidget {
   }
 }
 
-class _NeonButton extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Hand info bar
+// ---------------------------------------------------------------------------
+
+class _HandInfoBar extends StatelessWidget {
+  const _HandInfoBar({
+    required this.selectedCount,
+    required this.previewHandType,
+  });
+
+  final int selectedCount;
+  final HandType? previewHandType;
+
+  @override
+  Widget build(BuildContext context) {
+    final handName = previewHandType != null
+        ? HandTypeInfo.forType(previewHandType!).name.toUpperCase()
+        : null;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Selected card count pill.
+        _InfoPill(
+          child: Text(
+            '$selectedCount / $kMaxSelectedCards selected',
+            style: TextStyle(
+              color: selectedCount > 0
+                  ? AppColors.neonYellow
+                  : AppColors.textMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+        if (handName != null) ...[
+          const SizedBox(width: 10),
+          // Hand type preview pill – neon cyan glow.
+          _InfoPill(
+            glowColor: AppColors.neonBlue,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_awesome,
+                    size: 12, color: AppColors.neonBlue),
+                const SizedBox(width: 5),
+                Text(
+                  handName,
+                  style: TextStyle(
+                    color: AppColors.neonBlue,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                    shadows: [
+                      Shadow(
+                        color: AppColors.neonBlue.withValues(alpha: 0.85),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  const _InfoPill({required this.child, this.glowColor});
+
+  final Widget child;
+  final Color? glowColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final glow = glowColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: glow != null
+              ? glow.withValues(alpha: 0.55)
+              : AppColors.mutedPurple.withValues(alpha: 0.5),
+          width: 1.2,
+        ),
+        boxShadow: glow != null
+            ? [
+                BoxShadow(
+                  color: glow.withValues(alpha: 0.22),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
+      ),
+      child: child,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Neon press button (StatefulWidget for scale animation)
+// ---------------------------------------------------------------------------
+
+class _NeonButton extends StatefulWidget {
   const _NeonButton({
     required this.label,
-    required this.sublabel,
+    required this.countLabel,
+    required this.countSuffix,
     required this.enabled,
-    required this.primaryColor,
+    required this.width,
+    required this.height,
+    required this.gradientColors,
+    required this.glowColor,
+    required this.borderColor,
     required this.onPressed,
   });
 
   final String label;
-  final String sublabel;
+  final String countLabel;
+  final String countSuffix;
   final bool enabled;
-  final Color primaryColor;
+  final double width;
+  final double height;
+  final List<Color> gradientColors;
+  final Color glowColor;
+  final Color borderColor;
   final VoidCallback onPressed;
 
   @override
+  State<_NeonButton> createState() => _NeonButtonState();
+}
+
+class _NeonButtonState extends State<_NeonButton> {
+  bool _pressed = false;
+
+  void _handleTapDown(TapDownDetails _) {
+    if (widget.enabled) setState(() => _pressed = true);
+  }
+
+  void _handleTapUp(TapUpDetails _) {
+    if (_pressed) setState(() => _pressed = false);
+  }
+
+  void _handleTapCancel() {
+    if (_pressed) setState(() => _pressed = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final effectiveColor = enabled ? primaryColor : AppColors.textMuted;
+    final enabled = widget.enabled;
+    final scale = _pressed ? 0.94 : 1.0;
+
+    // Disabled appearance
+    final borderCol = enabled
+        ? widget.borderColor.withValues(alpha: 0.9)
+        : AppColors.mutedPurple.withValues(alpha: 0.3);
+    final gradient = enabled
+        ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              widget.gradientColors[0].withValues(alpha: 0.85),
+              widget.gradientColors[1].withValues(alpha: 0.55),
+            ],
+          )
+        : LinearGradient(
+            colors: [
+              AppColors.surface.withValues(alpha: 0.45),
+              AppColors.surface.withValues(alpha: 0.3),
+            ],
+          );
+    final shadows = enabled && !_pressed
+        ? [
+            BoxShadow(
+              color: widget.glowColor.withValues(alpha: 0.45),
+              blurRadius: 18,
+              spreadRadius: 2,
+            ),
+            BoxShadow(
+              color: widget.glowColor.withValues(alpha: 0.20),
+              blurRadius: 36,
+              spreadRadius: 4,
+            ),
+          ]
+        : <BoxShadow>[];
 
     return GestureDetector(
-      onTap: enabled ? onPressed : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        width: 170,
-        height: 52,
-        decoration: BoxDecoration(
-          color: enabled
-              ? primaryColor.withValues(alpha: 0.12)
-              : AppColors.surface.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: effectiveColor.withValues(alpha: enabled ? 0.9 : 0.3),
-            width: 2,
+      onTap: enabled ? widget.onPressed : null,
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderCol, width: 1.8),
+            boxShadow: shadows,
           ),
-          boxShadow: enabled
-              ? [
-                  BoxShadow(
-                    color: primaryColor.withValues(alpha: 0.35),
-                    blurRadius: 12,
-                    spreadRadius: 1,
-                  )
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: effectiveColor,
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Main label
+              Text(
+                widget.label,
+                style: TextStyle(
+                  color: enabled
+                      ? Colors.white.withValues(alpha: 0.95)
+                      : AppColors.textMuted.withValues(alpha: 0.5),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.6,
+                  shadows: enabled
+                      ? [
+                          Shadow(
+                            color:
+                                widget.glowColor.withValues(alpha: 0.7),
+                            blurRadius: 8,
+                          ),
+                        ]
+                      : null,
+                ),
               ),
-            ),
-            Text(
-              sublabel,
-              style: TextStyle(
-                color: effectiveColor.withValues(alpha: 0.7),
-                fontSize: 10,
+              const SizedBox(height: 3),
+              // Count sub-label
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: widget.countLabel,
+                      style: TextStyle(
+                        color: enabled
+                            ? widget.glowColor.withValues(alpha: 0.95)
+                            : AppColors.textMuted.withValues(alpha: 0.4),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.3,
+                        shadows: enabled
+                            ? [
+                                Shadow(
+                                  color: widget.glowColor
+                                      .withValues(alpha: 0.6),
+                                  blurRadius: 6,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' ${widget.countSuffix}',
+                      style: TextStyle(
+                        color: enabled
+                            ? Colors.white.withValues(alpha: 0.55)
+                            : AppColors.textMuted.withValues(alpha: 0.3),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
