@@ -1,5 +1,4 @@
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
 
 import 'package:balatro_blast/game/components/card_component.dart';
 import 'package:balatro_blast/game/managers/game_manager.dart';
@@ -27,7 +26,6 @@ class HandComponent extends PositionComponent {
   }
 
   Future<void> refresh() async {
-    // Remove all existing card components.
     removeAll(_cardComponents);
     _cardComponents.clear();
 
@@ -35,17 +33,21 @@ class HandComponent extends PositionComponent {
     if (hand.isEmpty) return;
 
     final totalWidth = size.x;
-    final cardSpacing = hand.length <= 5
-        ? (kCardWidth + 8.0)
-        : (totalWidth - kCardWidth) / (hand.length - 1);
-
-    final startX = hand.length <= 5
-        ? (totalWidth - hand.length * (kCardWidth + 8)) / 2
-        : 4.0;
+    // Ensure cards fit within the component width with padding.
+    const padding = 8.0;
+    final available = totalWidth - padding * 2;
+    // Spacing between card left edges: spread them evenly.
+    final spacing = hand.length <= 1
+        ? 0.0
+        : (available - kCardWidth) / (hand.length - 1);
+    final clampedSpacing = spacing.clamp(0.0, kCardWidth + kMaxCardSpacing);
+    final totalCardWidth = kCardWidth + clampedSpacing * (hand.length - 1);
+    final startX = (totalWidth - totalCardWidth) / 2;
 
     for (int i = 0; i < hand.length; i++) {
       final card = hand[i];
-      final cardX = startX + i * cardSpacing;
+      final cardX = startX + i * clampedSpacing;
+      // Unselected cards are pushed down; selected cards float up.
       final cardY = card.isSelected ? 0.0 : kCardSelectedOffset;
 
       final component = CardComponent(
@@ -57,17 +59,5 @@ class HandComponent extends PositionComponent {
     }
 
     await addAll(_cardComponents);
-  }
-
-  @override
-  void render(Canvas canvas) {
-    // Draw action buttons below the hand.
-    _drawActionButtons(canvas);
-    super.render(canvas);
-  }
-
-  void _drawActionButtons(Canvas canvas) {
-    // These are rendered as overlapping Flutter widgets in GameScreen;
-    // this stub exists for layout reference only.
   }
 }

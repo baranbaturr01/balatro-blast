@@ -3,7 +3,9 @@ import 'package:balatro_blast/models/game_state.dart';
 import 'package:balatro_blast/models/playing_card.dart';
 import 'package:balatro_blast/models/joker_card.dart';
 import 'package:balatro_blast/models/blind.dart';
+import 'package:balatro_blast/models/hand_type.dart';
 import 'package:balatro_blast/engine/scoring_engine.dart';
+import 'package:balatro_blast/engine/poker_evaluator.dart';
 import 'package:balatro_blast/game/managers/score_manager.dart';
 import 'package:balatro_blast/game/managers/round_manager.dart';
 import 'package:balatro_blast/game/managers/shop_manager.dart';
@@ -15,13 +17,15 @@ class GameManager extends ChangeNotifier {
         _scoringEngine = ScoringEngine(),
         _scoreManager = ScoreManager(),
         _roundManager = RoundManager(),
-        _shopManager = ShopManager();
+        _shopManager = ShopManager(),
+        _evaluator = const PokerEvaluator();
 
   GameState _state;
   final ScoringEngine _scoringEngine;
   final ScoreManager _scoreManager;
   final RoundManager _roundManager;
   final ShopManager _shopManager;
+  final PokerEvaluator _evaluator;
 
   GameState get state => _state;
   ScoreManager get scoreManager => _scoreManager;
@@ -71,6 +75,7 @@ class GameManager extends ChangeNotifier {
       card.isSelected = true;
       _state.selectedCards.add(card);
     }
+    _updatePreviewHand();
     notifyListeners();
   }
 
@@ -79,7 +84,22 @@ class GameManager extends ChangeNotifier {
       card.isSelected = false;
     }
     _state.selectedCards.clear();
+    _state.previewHandType = null;
     notifyListeners();
+  }
+
+  void _updatePreviewHand() {
+    if (_state.selectedCards.isEmpty) {
+      _state.previewHandType = null;
+    } else {
+      try {
+        final result = _evaluator.evaluate(List.from(_state.selectedCards));
+        _state.previewHandType = result.handType;
+      } catch (e) {
+        // Evaluation can fail with unusual card counts; silently reset preview.
+        _state.previewHandType = null;
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------

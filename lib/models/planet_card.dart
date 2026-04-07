@@ -23,6 +23,8 @@ class PlanetCard {
   final String name;
   final HandType upgrades;
 
+  String get description => 'Level up ${HandTypeInfo.forType(upgrades).name}';
+
   static const int cost = 4;
   static const int chipsPerLevel = 15;
   static const int multPerLevel = 1;
