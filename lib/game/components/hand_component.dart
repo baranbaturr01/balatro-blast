@@ -41,6 +41,8 @@ class HandComponent extends PositionComponent {
     final rawSpacing = hand.length <= 1
         ? 0.0
         : (available - kCardWidth) / (hand.length - 1);
+    // Clamp spacing: minimum 30% of card width keeps cards readable and
+    // avoids overlapping suit/rank text even at maximum hand size (8 cards).
     final spacing = rawSpacing.clamp(kCardWidth * 0.3, kCardWidth + kMaxCardSpacing);
 
     // Center the spread within the component.

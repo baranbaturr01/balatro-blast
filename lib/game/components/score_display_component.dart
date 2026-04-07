@@ -78,49 +78,55 @@ class ScoreDisplayComponent extends PositionComponent {
     );
 
     // ── CENTER SECTION: Score / Target ──
+    // Measure each element first so the triplet is always visually centred.
     final cx = size.x / 2;
     final scoreStr = _fmt(state.runningScore);
     final targetStr = _fmt(state.currentBlindTarget);
     final isComplete = state.runningScore >= state.currentBlindTarget;
     final scoreColor = isComplete ? AppColors.neonGreen : AppColors.neonYellow;
 
-    _drawTextCentered(
-      canvas,
-      scoreStr,
-      cx - 18,
-      4,
-      TextStyle(
-        color: scoreColor,
-        fontSize: 24,
-        fontWeight: FontWeight.w900,
-        shadows: [
-          Shadow(color: scoreColor.withValues(alpha: 0.9), blurRadius: 14),
-          Shadow(color: scoreColor.withValues(alpha: 0.5), blurRadius: 28),
-        ],
-      ),
+    final scoreStyle = TextStyle(
+      color: scoreColor,
+      fontSize: 24,
+      fontWeight: FontWeight.w900,
+      shadows: [
+        Shadow(color: scoreColor.withValues(alpha: 0.9), blurRadius: 14),
+        Shadow(color: scoreColor.withValues(alpha: 0.5), blurRadius: 28),
+      ],
     );
-    _drawTextCentered(
-      canvas,
-      '/',
-      cx,
-      10,
-      TextStyle(
-        color: AppColors.textMuted.withValues(alpha: 0.7),
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-      ),
+    const sepStyle = TextStyle(
+      color: AppColors.textMuted,
+      fontSize: 14,
+      fontWeight: FontWeight.bold,
     );
-    _drawTextCentered(
-      canvas,
-      targetStr,
-      cx + 18,
-      8,
-      const TextStyle(
-        color: AppColors.textMuted,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
+    const targetStyle = TextStyle(
+      color: AppColors.textMuted,
+      fontSize: 18,
+      fontWeight: FontWeight.bold,
     );
+
+    final scoreTp = TextPainter(
+      text: TextSpan(text: scoreStr, style: scoreStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final sepTp = TextPainter(
+      text: const TextSpan(text: ' / ', style: sepStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final targetTp = TextPainter(
+      text: TextSpan(text: targetStr, style: targetStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    const sepGap = 2.0;
+    final totalW = scoreTp.width + sepTp.width + sepGap * 2 + targetTp.width;
+    double drawX = cx - totalW / 2;
+
+    scoreTp.paint(canvas, Offset(drawX, 4));
+    drawX += scoreTp.width + sepGap;
+    sepTp.paint(canvas, Offset(drawX, 10));
+    drawX += sepTp.width + sepGap;
+    targetTp.paint(canvas, Offset(drawX, 8));
 
     // Progress bar
     _drawProgressBar(canvas, state.runningScore, state.currentBlindTarget, cx);
