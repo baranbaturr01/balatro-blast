@@ -6,7 +6,7 @@ import 'package:balatro_blast/painters/card_back_painter.dart';
 import 'package:balatro_blast/utils/constants.dart';
 import 'package:balatro_blast/utils/theme.dart';
 
-/// Displays the remaining deck as a face-down pile with count.
+/// Displays the remaining deck as a stacked face-down pile with count badge.
 class DeckComponent extends PositionComponent {
   DeckComponent({
     required this.gameManager,
@@ -16,9 +16,18 @@ class DeckComponent extends PositionComponent {
 
   final GameManager gameManager;
 
+  static const double _labelH = 14.0;
+  static const double _cardW = kCardWidth * 0.72;
+  static const double _cardH = kCardHeight * 0.72;
+  static const int _stackLayers = 4;
+  static const double _layerOffsetX = 1.8;
+  static const double _layerOffsetY = 1.2;
+
   @override
   void render(Canvas canvas) {
-    // "DECK" label
+    final count = gameManager.state.deckCount;
+
+    // ── "DECK" label ──
     final labelPainter = TextPainter(
       text: const TextSpan(
         text: 'DECK',
@@ -26,7 +35,7 @@ class DeckComponent extends PositionComponent {
           color: AppColors.mutedPurple,
           fontSize: 8,
           fontWeight: FontWeight.bold,
-          letterSpacing: 2,
+          letterSpacing: 2.5,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -36,46 +45,49 @@ class DeckComponent extends PositionComponent {
       Offset((size.x - labelPainter.width) / 2, 2),
     );
 
-    const cardW = kCardWidth * 0.75;
-    const cardH = kCardHeight * 0.75;
-    final startX = (size.x - cardW) / 2;
-    const startY = 16.0;
+    final startX = (size.x - _cardW) / 2;
+    const startY = _labelH + 2;
 
-    final painter = CardBackPainter();
-
-    // Draw stacked layers (shadow effect)
-    for (int i = 4; i >= 1; i--) {
-      canvas.save();
-      canvas.translate(startX + i * 1.5, startY + i * 1.0);
-      // Dimmer layers
-      final opacity = 0.3 + i * 0.1;
-      final shadowPaint = Paint()
-        ..color = AppColors.mutedPurple.withValues(alpha: opacity);
-      final r = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, cardW, cardH),
-        const Radius.circular(kCardRadius * 0.75),
+    // ── Stacked shadow layers (back to front) ──
+    for (int i = _stackLayers; i >= 1; i--) {
+      final ox = startX + i * _layerOffsetX;
+      final oy = startY + i * _layerOffsetY;
+      final alpha = 0.15 + i * 0.06;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(ox, oy, _cardW, _cardH),
+          const Radius.circular(kCardRadius * 0.75),
+        ),
+        Paint()..color = AppColors.mutedPurple.withValues(alpha: alpha),
       );
-      canvas.drawRRect(r, shadowPaint);
-      canvas.restore();
     }
 
-    // Top card (actual back)
+    // Drop shadow behind top card
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(startX + 2, startY + 4, _cardW, _cardH),
+        const Radius.circular(kCardRadius * 0.75),
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.45),
+    );
+
+    // ── Top card (card back) ──
     canvas.save();
     canvas.translate(startX, startY);
-    painter.paint(canvas, const Size(cardW, cardH));
+    CardBackPainter().paint(canvas, const Size(_cardW, _cardH));
     canvas.restore();
 
-    // Count overlay
-    final count = gameManager.state.deckCount;
+    // ── Count badge (centered on top card) ──
     final countPainter = TextPainter(
       text: TextSpan(
         text: '$count',
         style: const TextStyle(
           color: AppColors.textPrimary,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
           shadows: [
-            Shadow(color: Colors.black, blurRadius: 4),
+            Shadow(color: Colors.black, blurRadius: 6),
+            Shadow(color: Colors.black, blurRadius: 12),
           ],
         ),
       ),
@@ -84,18 +96,19 @@ class DeckComponent extends PositionComponent {
     countPainter.paint(
       canvas,
       Offset(
-        startX + (cardW - countPainter.width) / 2,
-        startY + (cardH - countPainter.height) / 2,
+        startX + (_cardW - countPainter.width) / 2,
+        startY + (_cardH - countPainter.height) / 2,
       ),
     );
 
-    // Remaining label
+    // ── "X left" label below ──
     final remainPainter = TextPainter(
-      text: const TextSpan(
-        text: 'left',
+      text: TextSpan(
+        text: '$count left',
         style: TextStyle(
-          color: AppColors.textMuted,
-          fontSize: 7,
+          color: AppColors.textMuted.withValues(alpha: 0.75),
+          fontSize: 8,
+          fontWeight: FontWeight.bold,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -104,7 +117,7 @@ class DeckComponent extends PositionComponent {
       canvas,
       Offset(
         (size.x - remainPainter.width) / 2,
-        startY + cardH + 4,
+        startY + _cardH + 5,
       ),
     );
   }

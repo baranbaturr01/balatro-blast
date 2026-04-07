@@ -202,6 +202,11 @@ class GameManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  void rerollShop() {
+    _shopManager.reroll(_state);
+    notifyListeners();
+  }
+
   void advanceFromShop() {
     _state = _roundManager.advance(_state);
     if (_state.phase == GamePhase.victory) {
