@@ -195,7 +195,7 @@ class _HandInfoBar extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.auto_awesome,
+                const Icon(Icons.auto_awesome,
                     size: 12, color: AppColors.neonBlue),
                 const SizedBox(width: 5),
                 Text(
@@ -307,14 +307,14 @@ class _NeonButtonState extends State<_NeonButton> {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = widget.enabled;
+    final isEnabled = widget.enabled;
     final scale = _pressed ? 0.94 : 1.0;
 
     // Disabled appearance
-    final borderCol = enabled
+    final borderCol = isEnabled
         ? widget.borderColor.withValues(alpha: 0.9)
         : AppColors.mutedPurple.withValues(alpha: 0.3);
-    final gradient = enabled
+    final gradient = isEnabled
         ? LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -329,7 +329,7 @@ class _NeonButtonState extends State<_NeonButton> {
               AppColors.surface.withValues(alpha: 0.3),
             ],
           );
-    final shadows = enabled && !_pressed
+    final shadows = isEnabled && !_pressed
         ? [
             BoxShadow(
               color: widget.glowColor.withValues(alpha: 0.45),
@@ -345,7 +345,7 @@ class _NeonButtonState extends State<_NeonButton> {
         : <BoxShadow>[];
 
     return GestureDetector(
-      onTap: enabled ? widget.onPressed : null,
+      onTap: isEnabled ? widget.onPressed : null,
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
@@ -370,13 +370,13 @@ class _NeonButtonState extends State<_NeonButton> {
               Text(
                 widget.label,
                 style: TextStyle(
-                  color: enabled
+                  color: isEnabled
                       ? Colors.white.withValues(alpha: 0.95)
                       : AppColors.textMuted.withValues(alpha: 0.5),
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.6,
-                  shadows: enabled
+                  shadows: isEnabled
                       ? [
                           Shadow(
                             color:
@@ -395,13 +395,13 @@ class _NeonButtonState extends State<_NeonButton> {
                     TextSpan(
                       text: widget.countLabel,
                       style: TextStyle(
-                        color: enabled
+                        color: isEnabled
                             ? widget.glowColor.withValues(alpha: 0.95)
                             : AppColors.textMuted.withValues(alpha: 0.4),
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.3,
-                        shadows: enabled
+                        shadows: isEnabled
                             ? [
                                 Shadow(
                                   color: widget.glowColor
@@ -415,7 +415,7 @@ class _NeonButtonState extends State<_NeonButton> {
                     TextSpan(
                       text: ' ${widget.countSuffix}',
                       style: TextStyle(
-                        color: enabled
+                        color: isEnabled
                             ? Colors.white.withValues(alpha: 0.55)
                             : AppColors.textMuted.withValues(alpha: 0.3),
                         fontSize: 11,
