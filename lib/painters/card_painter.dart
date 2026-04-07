@@ -162,13 +162,13 @@ class CardFacePainter extends CustomPainter {
   void _drawScoredGlow(Canvas canvas, Size size) {
     if (!card.isScored) return;
     final rect = _cardRRect(size);
-    const c = AppColors.goldAccent;
+    const glowColor = AppColors.goldAccent;
     // 4-layer glow
     for (int i = 4; i >= 1; i--) {
       canvas.drawRRect(
         rect,
         Paint()
-          ..color = c.withValues(alpha: 0.09 * i)
+          ..color = glowColor.withValues(alpha: 0.09 * i)
           ..style = PaintingStyle.stroke
           ..strokeWidth = i * 2.5
           ..maskFilter = MaskFilter.blur(BlurStyle.outer, i * 4.5),
@@ -177,7 +177,7 @@ class CardFacePainter extends CustomPainter {
     canvas.drawRRect(
       rect,
       Paint()
-        ..color = c
+        ..color = glowColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5,
     );
@@ -188,40 +188,40 @@ class CardFacePainter extends CustomPainter {
   void _drawSelectedGlow(Canvas canvas, Size size) {
     if (!card.isSelected) return;
     final rect = _cardRRect(size);
-    const c = AppColors.neonBlue;
+    const glowColor = AppColors.neonBlue;
 
     // Layer 1 – wide diffuse bloom
     canvas.drawRRect(rect,
         Paint()
-          ..color = c.withValues(alpha: 0.07)
+          ..color = glowColor.withValues(alpha: 0.07)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 9.0
           ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 14));
     // Layer 2
     canvas.drawRRect(rect,
         Paint()
-          ..color = c.withValues(alpha: 0.14)
+          ..color = glowColor.withValues(alpha: 0.14)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 6.0
           ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 8));
     // Layer 3
     canvas.drawRRect(rect,
         Paint()
-          ..color = c.withValues(alpha: 0.28)
+          ..color = glowColor.withValues(alpha: 0.28)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4.0
           ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 4));
     // Layer 4 – tight inner glow
     canvas.drawRRect(rect,
         Paint()
-          ..color = c.withValues(alpha: 0.55)
+          ..color = glowColor.withValues(alpha: 0.55)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.5
           ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 2));
     // Solid bright border on top of glow
     canvas.drawRRect(rect,
         Paint()
-          ..color = c
+          ..color = glowColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.0);
   }
