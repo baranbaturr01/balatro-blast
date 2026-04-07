@@ -6,7 +6,7 @@ import 'package:balatro_blast/painters/joker_painter.dart';
 import 'package:balatro_blast/utils/constants.dart';
 import 'package:balatro_blast/utils/theme.dart';
 
-/// Displays the player's joker cards in a row of slots.
+/// Displays the player's joker cards in a row of evenly-spaced slots.
 class JokerSlotComponent extends PositionComponent {
   JokerSlotComponent({
     required this.gameManager,
@@ -16,11 +16,15 @@ class JokerSlotComponent extends PositionComponent {
 
   final GameManager gameManager;
 
+  static const double _labelH = 16.0;
+  static const double _slotPadH = 10.0; // horizontal padding total
+  static const double _slotGap = 6.0;   // gap between slots
+
   @override
   void render(Canvas canvas) {
     final jokers = gameManager.state.jokers;
 
-    // "JOKERS" label
+    // ── "JOKERS" label ──
     final labelPainter = TextPainter(
       text: const TextSpan(
         text: 'JOKERS',
@@ -28,46 +32,65 @@ class JokerSlotComponent extends PositionComponent {
           color: AppColors.mutedPurple,
           fontSize: 8,
           fontWeight: FontWeight.bold,
-          letterSpacing: 2,
+          letterSpacing: 2.5,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    labelPainter.paint(canvas, const Offset(4, 2));
+    labelPainter.paint(
+      canvas,
+      Offset((size.x - labelPainter.width) / 2, 2),
+    );
 
-    const slotTop = 14.0;
-    final slotW = kJokerWidth + 6.0;
+    // ── Compute slot geometry ──
+    final slotAreaW = size.x - _slotPadH;
+    final slotW = (slotAreaW - _slotGap * (kMaxJokers - 1)) / kMaxJokers;
+    final slotH = size.y - _labelH - 6;
+    final startX = _slotPadH / 2;
+    const slotY = _labelH;
 
-    // Draw slots
     for (int i = 0; i < kMaxJokers; i++) {
-      final slotX = i * slotW;
+      final slotX = startX + i * (slotW + _slotGap);
       final slotRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(slotX, slotTop, kJokerWidth, size.y - slotTop - 4),
+        Rect.fromLTWH(slotX, slotY, slotW, slotH),
         const Radius.circular(kCardRadius),
       );
 
       if (i < jokers.length) {
-        // Filled joker slot – paint joker card
+        // Filled slot: bright tint bg + joker card
+        canvas.drawRRect(
+          slotRect,
+          Paint()..color = const Color(0xFF1a0f30).withValues(alpha: 0.9),
+        );
+        canvas.drawRRect(
+          slotRect,
+          Paint()
+            ..color = AppColors.mutedPurple.withValues(alpha: 0.6)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5,
+        );
+        // Paint joker inside the slot bounds
         canvas.save();
-        canvas.translate(slotX, slotTop);
+        canvas.translate(slotX, slotY);
         final painter = JokerPainter(joker: jokers[i]);
-        painter.paint(canvas, Size(kJokerWidth, size.y - slotTop - 4));
+        painter.paint(canvas, Size(slotW, slotH));
         canvas.restore();
       } else {
-        // Empty slot – draw dashed border
-        final bgPaint = Paint()
-          ..color = AppColors.surface.withValues(alpha: 0.5);
-        canvas.drawRRect(slotRect, bgPaint);
+        // Empty slot
+        canvas.drawRRect(
+          slotRect,
+          Paint()..color = AppColors.surface.withValues(alpha: 0.3),
+        );
         _drawDashedBorder(canvas, slotRect);
 
-        // Ghost icon
+        // "?" ghost
         final ghostPainter = TextPainter(
-          text: const TextSpan(
+          text: TextSpan(
             text: '?',
             style: TextStyle(
-              color: AppColors.mutedPurple,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              color: AppColors.mutedPurple.withValues(alpha: 0.5),
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
             ),
           ),
           textDirection: TextDirection.ltr,
@@ -75,8 +98,8 @@ class JokerSlotComponent extends PositionComponent {
         ghostPainter.paint(
           canvas,
           Offset(
-            slotX + (kJokerWidth - ghostPainter.width) / 2,
-            slotTop + (size.y - slotTop - 4 - ghostPainter.height) / 2,
+            slotX + (slotW - ghostPainter.width) / 2,
+            slotY + (slotH - ghostPainter.height) / 2,
           ),
         );
       }
@@ -85,12 +108,12 @@ class JokerSlotComponent extends PositionComponent {
 
   void _drawDashedBorder(Canvas canvas, RRect rect) {
     final paint = Paint()
-      ..color = AppColors.mutedPurple.withValues(alpha: 0.4)
+      ..color = AppColors.mutedPurple.withValues(alpha: 0.35)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    const dashLen = 4.0;
-    const gapLen = 3.0;
+    const dashLen = 5.0;
+    const gapLen = 4.0;
     final path = Path()..addRRect(rect);
     final metrics = path.computeMetrics().first;
     final totalLen = metrics.length;
@@ -98,10 +121,7 @@ class JokerSlotComponent extends PositionComponent {
     final dashedPath = Path();
     while (pos < totalLen) {
       final end = (pos + dashLen).clamp(0.0, totalLen);
-      dashedPath.addPath(
-        metrics.extractPath(pos, end),
-        Offset.zero,
-      );
+      dashedPath.addPath(metrics.extractPath(pos, end), Offset.zero);
       pos += dashLen + gapLen;
     }
     canvas.drawPath(dashedPath, paint);

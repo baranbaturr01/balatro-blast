@@ -6,6 +6,9 @@ import 'package:balatro_blast/models/playing_card.dart';
 import 'package:balatro_blast/utils/constants.dart';
 
 /// Manages and displays the player's hand of cards in a horizontal layout.
+///
+/// Selected cards float to the top (y = 0) while unselected cards sit
+/// at [kCardSelectedOffset] lower.
 class HandComponent extends PositionComponent {
   HandComponent({
     required this.gameManager,
@@ -32,30 +35,30 @@ class HandComponent extends PositionComponent {
     final hand = gameManager.state.hand;
     if (hand.isEmpty) return;
 
-    final totalWidth = size.x;
-    // Ensure cards fit within the component width with padding.
+    // Compute inter-card spacing so all cards fit within the component width.
     const padding = 8.0;
-    final available = totalWidth - padding * 2;
-    // Spacing between card left edges: spread them evenly.
-    final spacing = hand.length <= 1
+    final available = size.x - padding * 2;
+    final rawSpacing = hand.length <= 1
         ? 0.0
         : (available - kCardWidth) / (hand.length - 1);
-    final clampedSpacing = spacing.clamp(0.0, kCardWidth + kMaxCardSpacing);
-    final totalCardWidth = kCardWidth + clampedSpacing * (hand.length - 1);
-    final startX = (totalWidth - totalCardWidth) / 2;
+    final spacing = rawSpacing.clamp(kCardWidth * 0.3, kCardWidth + kMaxCardSpacing);
+
+    // Center the spread within the component.
+    final spreadW = kCardWidth + spacing * (hand.length - 1);
+    final startX = (size.x - spreadW) / 2;
 
     for (int i = 0; i < hand.length; i++) {
       final card = hand[i];
-      final cardX = startX + i * clampedSpacing;
-      // Unselected cards are pushed down; selected cards float up.
+      // Selected cards float upward; unselected rest at the lower baseline.
       final cardY = card.isSelected ? 0.0 : kCardSelectedOffset;
 
-      final component = CardComponent(
-        card: card,
-        onTapped: onCardTapped,
-        position: Vector2(cardX, cardY),
+      _cardComponents.add(
+        CardComponent(
+          card: card,
+          onTapped: onCardTapped,
+          position: Vector2(startX + i * spacing, cardY),
+        ),
       );
-      _cardComponents.add(component);
     }
 
     await addAll(_cardComponents);
